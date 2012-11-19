@@ -1,9 +1,22 @@
 (function() {
 
+  //*@public
+  /**
+    _enyo.Collection_ is extended from _Backbone.js_'s _Backbone.Collection_.
+    Any of the API from _Backbone.Collection_ is available on _enyo.Collection_
+    plus any of the features of _enyo.Component_ (inherited from _enyo.Extension_).
+    
+    _enyo.CollectionControllers_ properly handle the events and _status_ of
+    _enyo.Collection_.
+  
+    TODO: complete docs...
+  */
   var collection = enyo.kind({
     name: "enyo.Collection",
     kind: "enyo.Extension",
     extendFrom: "enyo.Backbone.Collection",
+    preserve: true,
+    preserveAll: false,
     
     published: {
       status: 0x00
@@ -53,25 +66,27 @@
       //console.log("didAdd", this, arguments);
       this.notifyObservers("models", null, this.models);
       this.notifyObservers("length", null, this.length);
+      this.dispatchBubble("oncollectionadd", model);
     },
     
     didRemove: function (model, collection, params) {
       //console.log("didRemove", this, arguments);
       this.notifyObservers("models", null, this.models);
       this.notifyObservers("length", null, this.length);
+      this.dispatchBubble("oncollectionremove", model);
     },
     
     didChange: function (model, options) {
       //console.log("didChange", this, arguments);
       this.notifyObservers("models", null, this.models);
-      this.dispatchBubble("onchange", model);
+      this.dispatchBubble("oncollectionchange", model);
     },
     
     didReset: function (collection, options) {
       //console.log("didReset", this, arguments);
       this.notifyObservers("length", null, this.length);
       this.notifyObservers("models", null, this.models);
-      this.dispatchBubble("onreset");
+      this.dispatchBubble("oncollectionreset");
     },
     
     setupObservers: function () {
