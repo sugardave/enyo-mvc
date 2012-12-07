@@ -14,7 +14,10 @@
   var collection = enyo.kind({
     name: "enyo.Collection",
     kind: "enyo.Extension",
-    extendFrom: "enyo.Backbone.Collection",
+    extendFrom: [
+      {base: "enyo.Backbone.Collection", name: "collection"}
+    ],
+    mixins: ["enyo.MultipleDispatchMixin"],
     preserve: true,
     preserveAll: false,
     

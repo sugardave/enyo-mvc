@@ -3,13 +3,14 @@ enyo.kind({
   name: "enyo.CollectionListController",
   kind: "enyo.CollectionController",
   bindings: [
-    {from: "length", to: "owner.count", oneWay: true}
+    {from: "length", to: "owner.count"},
+    {from: "owner.targets", to: "targets"}
   ],
   handlers: {
     onSetupItem: "setupItem",
     ontap: "tapped",
     oncollectionreset: "didReset",
-    oncollectionchange: "didChange"
+    onSelect: "setSelected"
   },
   ownerChanged: function () {
     this.inherited(arguments);
@@ -22,15 +23,16 @@ enyo.kind({
     return true;
   },
   lengthChanged: function () {
-    if (!this.owner) return;
+    if (!this.owner || !this.collection) return;
     this.owner.refresh();
   },
   tapped: function (inSender, inEvent) {
   },
-  didChange: function (inCollection, inModel) {
-    this.owner.refresh();
+  modelChanged: function (inCollection, inModel) {
+    var idx, data = this.data;
+    idx = data.indexOf(inModel);
+    this.owner.renderRow(idx);
   },
-  
   // NOTE: unlike enyo.List/enyo.FlyweightRepeater where the
   // onSetupItem typically is interested in modifying the view
   // an enyo.CollectionList's onSetupItem is interested in the
@@ -48,13 +50,31 @@ enyo.kind({
       ch.controller.set("model", m);
       ch.refreshBindings();
     }
+    return true;
   },
   getTargets: function () {
-    return enyo.clone(this._targets || (this._targets = this.findTargets()));
+    return enyo.clone(this.targets);
   },
-  findTargets: function () {
-    var o = this.owner, c = enyo.only(enyo.pluck("name", o.get("items")),
-      enyo.indexBy("name", o.$.client.children));
-    return c;
+  
+  decorateEvent: function (name, event, sender) {
+      // if the event has the index property we assume
+      // it is associated with a row and we will, for now,
+      // add a property `model` that can be used by handlers
+      if (!isNaN(event.index)) {
+          var model = this.at(event.index);
+          if (model) event.model = model;
+          else event.model = null;
+      }
+  },
+  
+  setSelected: function (sender, event) {
+      var model = event.model;
+      if (!model) return;
+      model.set("selected", true);
+      if (this.previouslySelected) {
+          this.previouslySelected.set("selected", false);
+      }
+      this.previouslySelected = model;
   }
+  
 });

@@ -14,6 +14,11 @@ enyo.Mixin({
       var p = ch.bindProperty, t = this.getBindTargetFor(ch);
       this.autoBinding({source: c, from: p, target: ch, to: t});
     }, this);
+    this.autoBinding({source: c, from: "selected", target: this, to: "selected"});
+  },
+  //*@protected
+  selectedChanged: function () {
+      this.addRemoveClass("selected", this.selected);
   },
   //*@protected
   initMixin: function () {
@@ -61,8 +66,17 @@ enyo.Mixin({
     }
   },
   bindableControls: enyo.Computed(function () {
-    return enyo.filter(this.controls, function (ch) {
-      return ch.bindProperty;
+    var ctrs = enyo.clone(this.controls);
+    ctrs.unshift(this);
+    return this.findBindableControls(ctrs);
+  }),
+  findBindableControls: function (controls) {
+    if (!controls || controls.length === 0) return controls;
+    var ret = [], fn = enyo.bind(this, this.findBindableControls);
+    enyo.forEach(controls, function (control) {
+      ret = ret.concat(fn(control.controls || []));
+      if (control.bindProperty) ret.push(control);
     });
-  })
+    return ret;
+  }
 });

@@ -41,13 +41,12 @@ enyo.kind({
     
     // register for destroy notification
     m.on("destroy", (this._destroyResponder = enyo.bind(this, this.didDestroy)));
-    
-    // TODO: is this desirable here?
-    this.owner.refreshBindings();
+    // TODO: is there a time/way this should be disabled?
+    this.notifyAll();
   },
   
   didUpdate: function (model) {
-    var ch, params = model.changedAttributes();
+    var ch, params = model.changedAttributes(), c;
     ch = params? enyo.keys(params): false;
     if (ch && ch.length) {
       this.stopNotifications();
@@ -88,11 +87,22 @@ enyo.kind({
     return this.inherited(arguments);
   },
   
-  set: function (inProp, inValue) {
-    if (this.model && inProp && !enyo.isString(inProp) && (!inValue || (inValue && !enyo.isString(inValue)))) {
-      this.model.set(inProp, inValue);
-    } else {
-      return this.inherited(arguments);
+  set: function (key, value) {
+    // if the key is either a hash or included as an attribute of the model
+    // then we assume it is a request to set it on the model
+    if (this.model) {
+      if ("string" !== typeof key || key in this.model.attributes) {
+        // even though the api is different for each possibility the outcome
+        // will be the same...
+        return this.model.set(key, value);
+      }
     }
+    return this.inherited(arguments);
+  },
+  
+  notifyAll: function () {
+    var targets = this.get("dispatchTargets");
+    if (this.owner && -1 === targets.indexOf(this.owner)) targets.push(this.owner);
+    enyo.forEach(targets, function (target) {target.refreshBindings()});
   }
 });

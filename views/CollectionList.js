@@ -10,31 +10,53 @@
 enyo.kind({
   name: "enyo.CollectionList",
   kind: "enyo.List",
-  
-  // NOTE: there's an option here, overload the controller
-  // to know about the collection type, or provide it
-  // to the list and have it hand-it off...
   controller: "enyo.CollectionListController",
-  published: {
-    collection: ""
-  },
-  //*@protected
+  collection: null,
   create: function () {
-    var cl = this.get("collection"), c;
     this.inherited(arguments);
-    c = this.get("controller");
-    
-    // let the controller deal with the setup on its own
-    if (c && cl) c.set("collection", cl);
+    this.collectionChanged();
+  },
+  controllerChanged: function () {
+    var ctrl, tmp;
+    this.inherited(arguments);
+    ctrl = this.controller;
+    if (ctrl && !(ctrl instanceof enyo.CollectionListController)) {
+      tmp = ctrl;
+      ctrl = this.controller = new enyo.CollectionListController();
+      ctrl.set("owner", this);
+      this.collection = tmp;
+    }
+  },
+  collectionChanged: function () {
+    this.findAndInstance("collection", function (ctor, inst) {
+      if (!(ctor || inst)) return;
+      if (ctor || inst !== this.controller.collection) {
+        this.controller.set("collection", inst);
+      }
+    })
   },
   //*@protected
   initComponents: function () {
-    var names = enyo.pluck("name", this.get("items")), ctrs;
+    // grab the correct items, these are uninstanced control definitions
+    // we have no idea what information they contain only that we need
+    // to be able to find them once they are created
+    var items = this.get("items"), ctrs = [];
+    // create a unique id for each of them that we can use to find later
+    enyo.forEach(items, function (item) {
+      item._listId = enyo.uid("_list");
+      ctrs.push(item._listId);
+    });
+    // do the normal routine and assume children are being created
     this.inherited(arguments);
-    ctrs = enyo.only(names, enyo.indexBy("name", this.controls))
+    // take the ids we created before and look through the references to
+    // controls we created and only select those
+    ctrs = enyo.only(ctrs, enyo.indexBy("_listId", this.controls));
     enyo.forEach(ctrs, function (ctr) {
+      // apply the required functionality we need (mixin) to each of
+      // these controls
       ctr.extend(enyo.CollectionRowMixin);
     });
+    this.set("targets", ctrs);
   },
   //*@protected
   items: enyo.Computed(function () {
