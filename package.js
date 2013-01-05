@@ -1,8 +1,10 @@
 enyo.depends(
-  "foss/underscore/underscore.js",
-  "foss/backbone/backbone.js",
-  "ext",
-  "models",
-  "controllers",
-  "views"
+    "foss/jquery",
+    "foss/underscore/underscore.js",
+    "foss/backbone/backbone.js",
+    "foss/backbone-relational/backbone-relational.js",
+    "ext",
+    "models",
+    "controllers",
+    "views"
 );
