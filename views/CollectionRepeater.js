@@ -16,10 +16,17 @@ enyo.kind({
     // support for multiselection
     multiselect: false,
     includeScroller: true,
+    published: {
+        strategyKind: null
+    },
     tools: [
         {name: "client", kind: "enyo.Scroller", isChrome: true}
     ],
     mixins: ["enyo.CommonCollectionViewMixin"],
+    create: function() {
+        this.inherited(arguments);
+        this.strategyKindChanged();
+    },
     /**
         We need to initialize our components in the normal way
         with some slightly added behavior. We have to make sure
@@ -45,6 +52,9 @@ enyo.kind({
         if (this.includeScroller) {
             this.createComponents(this.tools);
         }
+    },
+    strategyKindChanged: function() {
+        if (this.strategyKind && this.$.client.kind === "enyo.Scroller") this.$.client.set("strategyKind", this.strategyKind);
     },
     /**
         A computed property that returns only the views/controls that are
